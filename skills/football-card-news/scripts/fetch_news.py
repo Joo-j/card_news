@@ -23,7 +23,7 @@ FEEDS = [
     ("Sky Sports", "https://www.skysports.com/rss/11095"),
     ("ESPN", "https://www.espn.com/espn/rss/soccer/news"),
 ]
-UA = {"User-Agent": "Mozilla/5.0 (compatible; pitchnote-card-news/1.0)"}
+UA = {"User-Agent": "Mozilla/5.0 (compatible; card-news/1.0)"}
 
 
 def clean(text: str) -> str:

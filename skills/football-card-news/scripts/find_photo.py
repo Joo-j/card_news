@@ -16,7 +16,7 @@ from pathlib import Path
 import requests
 
 API = "https://commons.wikimedia.org/w/api.php"
-UA = {"User-Agent": "pitchnote-card-news/1.0 (https://github.com/Joo-j/card_news)"}
+UA = {"User-Agent": "card-news/1.0 (https://github.com/Joo-j/card_news)"}
 ALLOWED = re.compile(r"^(CC BY(-SA)? [0-9.]+|CC0|Public domain)$", re.I)
 
 

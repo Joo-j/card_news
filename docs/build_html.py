@@ -13,11 +13,12 @@ import os
 import re
 
 DOCUMENTS = [
-    'card-news-spec.md',
+    '00-overview.md',
+    '01-football.md',
 ]
 
-OUTPUT_FILENAME = '피치노트-카드뉴스-스펙.html'
-PAGE_TITLE = '피치노트 축구 카드뉴스 스펙'
+OUTPUT_FILENAME = '카드뉴스-스펙.html'
+PAGE_TITLE = '카드뉴스 스펙'
 
 _CODE_TOKEN = '\x00CODE{}\x00'
 _HEADING_RE = re.compile(r'^(#{1,6})\s+(.*)$')
@@ -593,7 +594,7 @@ def build() -> str:
         '<main>\n'
         '<header class="masthead"><h1>{title}</h1><p>기준 시점 2026-10-04</p></header>\n'
         '{body}\n'
-        '<footer class="colophon">docs/card-news-spec.md 에서 생성</footer>\n'
+        '<footer class="colophon">docs/ 의 마크다운 문서에서 생성</footer>\n'
         '</main>\n</div>\n<script>{script}</script>\n</body>\n</html>\n'
     ).format(title=html.escape(PAGE_TITLE, quote=False), style=STYLE,
              toc=''.join(toc_parts), body='\n'.join(body_parts), script=SCRIPT)

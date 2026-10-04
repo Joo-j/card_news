@@ -11,7 +11,7 @@ import sys
 
 import requests
 
-UA = {"User-Agent": "Mozilla/5.0 (compatible; pitchnote-card-news/1.0)"}
+UA = {"User-Agent": "Mozilla/5.0 (compatible; card-news/1.0)"}
 
 
 def main() -> None:
