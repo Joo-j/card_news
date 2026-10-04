@@ -1,0 +1,4 @@
+anthropic>=0.125,<1
+feedparser>=6.0
+Pillow>=11.0
+requests>=2.32
