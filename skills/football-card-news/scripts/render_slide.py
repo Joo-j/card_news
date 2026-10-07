@@ -9,7 +9,7 @@
         --who "해리 케인" --out 1_케인_05.jpg
 
 info 는 흰 박스 소제목(한두 줄) 아래에 본문 여러 줄을 왼쪽 정렬로 쓴다.
-quote 는 큰 따옴표 아래에 인용문을 가운데 정렬로 쓰고, 맨 아래에 말한 사람을 쓴다.
+quote 는 인용문을 가운데 정렬로 쓰고, 맨 아래에 말한 사람을 쓴다. 따옴표는 넣지 않는다.
 두 모양 모두 계정 아이디를 오른쪽 위에 둔다. \\n 은 줄바꿈이다.
 """
 from __future__ import annotations
@@ -78,7 +78,6 @@ def quote(img: Image.Image, text: str, who: str, handle: str) -> tuple[Image.Ima
     lines = text.split("\n")
     warn_wide(lines, quote_font, W - SIDE * 2)
     y = H - 150 - line_h * len(lines)
-    draw.text((W / 2, y - 70), "“  ”", font=font("Black", 150), fill=TEXT, anchor="ms")
     for i, line in enumerate(lines):
         draw.text((W / 2, y + i * line_h), line, font=quote_font, fill=TEXT, anchor="mm")
     draw.text((W / 2, H - 95), who, font=font("Bold", 32), fill=WHO, anchor="mm")
