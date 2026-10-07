@@ -3,9 +3,14 @@
 
     python3 render_card.py --photo kane.jpg --tag 네이션스리그 \
         --headline "잉글랜드, 크로아티아에\\n[7-0] 대승" --out 1_잉글랜드.jpg \
-        [--handle @pitchnote_] [--focus-y 0.12] [--focus-x 0.5] [--zoom 1.0]
+        [--handle @pitchnote_] [--focus-y 0.12] [--focus-x 0.5] [--zoom 1.0] \
+        [--photo2 yamal.jpg --focus2-y 0.0 --focus2-x 0.5 --zoom2 1.0]
 
 제목의 \\n 은 줄바꿈, [ ] 로 감싼 부분은 강조색이다.
+--photo2 를 주면 화면을 좌우로 나눠 왼쪽에 --photo, 오른쪽에 --photo2 를 놓고 가운데에 VS 를 그린다.
+--style breaking 은 속보용이다. 카테고리 대신 흰색 [--label] 을 제목 위에 두고, 제목 전체를 연두색으로 크게 쓰며,
+계정 아이디를 하단 가운데에 둔다. 이 모양에서는 --tag 를 쓰지 않는다.
+--style official 은 같은 모양에 라벨만 [오피셜] 로 바뀐다.
 """
 from __future__ import annotations
 
@@ -19,6 +24,7 @@ FONTS = Path(__file__).resolve().parent.parent / "assets" / "fonts"
 W, H = 1080, 1350
 MARGIN = 64
 ACCENT = (61, 123, 255)
+BREAKING = (205, 245, 60)
 TEXT = (255, 255, 255)
 HANDLE = (235, 235, 235)
 MAX_HEADLINE = 104
@@ -29,12 +35,26 @@ def font(weight: str, size: int) -> ImageFont.FreeTypeFont:
     return ImageFont.truetype(str(FONTS / f"Pretendard-{weight}.otf"), size)
 
 
-def cover(photo: Image.Image, focus_y: float, focus_x: float, zoom: float) -> Image.Image:
-    scale = max(W / photo.width, H / photo.height) * zoom
+def cover(photo: Image.Image, focus_y: float, focus_x: float, zoom: float, width: int = W) -> Image.Image:
+    scale = max(width / photo.width, H / photo.height) * zoom
     resized = photo.resize((round(photo.width * scale), round(photo.height * scale)), Image.LANCZOS)
-    left = round((resized.width - W) * focus_x)
+    left = round((resized.width - width) * focus_x)
     top = round((resized.height - H) * focus_y)
-    return resized.crop((left, top, left + W, top + H))
+    return resized.crop((left, top, left + width, top + H))
+
+
+def split(left: Image.Image, right: Image.Image) -> Image.Image:
+    img = Image.new("RGB", (W, H))
+    img.paste(left, (0, 0))
+    img.paste(right, (W // 2, 0))
+    ImageDraw.Draw(img).rectangle([W // 2 - 2, 0, W // 2 + 1, H], fill=TEXT)
+    return img
+
+
+def draw_vs(draw: ImageDraw.ImageDraw) -> None:
+    r, cy = 64, int(H * 0.42)
+    draw.ellipse([W // 2 - r, cy - r, W // 2 + r, cy + r], fill=ACCENT)
+    draw.text((W // 2, cy), "VS", font=font("Black", 56), fill=TEXT, anchor="mm")
 
 
 def shade(img: Image.Image) -> Image.Image:
@@ -48,6 +68,32 @@ def shade(img: Image.Image) -> Image.Image:
     return Image.alpha_composite(img.convert("RGBA"), overlay)
 
 
+def shade_breaking(img: Image.Image) -> Image.Image:
+    overlay = Image.new("RGBA", (W, H), (0, 0, 0, 0))
+    draw = ImageDraw.Draw(overlay)
+    for y in range(H):
+        bottom = max(0.0, (y - H * 0.45) / (H * 0.4))
+        draw.line([(0, y), (W, y)], fill=(0, 0, 0, int(255 * min(0.88, 0.88 * min(1.0, bottom) ** 1.1))))
+    return Image.alpha_composite(img.convert("RGBA"), overlay)
+
+
+def draw_breaking(draw: ImageDraw.ImageDraw, label: str, headline: str, handle: str) -> int:
+    lines = [plain(l) for l in headline.split("\n")]
+    size = 132
+    while size > 84 and max(font("Black", size).getlength(l) for l in lines) > W - 72 * 2:
+        size -= 2
+    head = font("Black", size)
+    line_h = int(size * 1.18)
+    y = H - 200 - line_h * len(lines)
+    draw.text((72, y - int(size * 0.95)), f"[{label}]", font=font("Black", int(size * 0.72)), fill=TEXT)
+    for line in lines:
+        draw.text((72, y), line, font=head, fill=BREAKING)
+        y += line_h
+    if handle:
+        draw.text((W // 2, H - 80), handle, font=font("Bold", 34), fill=TEXT, anchor="ms")
+    return size
+
+
 def segments(line: str) -> list[tuple[str, bool]]:
     return [(part, i % 2 == 1) for i, part in enumerate(re.split(r"\[|\]", line)) if part]
 
@@ -57,10 +103,28 @@ def plain(line: str) -> str:
 
 
 def render(photo: Path, tag: str, headline: str, out: Path, handle: str,
-           focus_y: float, focus_x: float, zoom: float) -> None:
-    img = shade(cover(Image.open(photo).convert("RGB"), focus_y, focus_x, zoom))
+           focus_y: float, focus_x: float, zoom: float,
+           photo2: Path | None = None, focus2_y: float = 0.15, focus2_x: float = 0.5, zoom2: float = 1.0,
+           style: str = "default", label: str | None = None) -> None:
+    if photo2:
+        base = split(cover(Image.open(photo).convert("RGB"), focus_y, focus_x, zoom, W // 2),
+                     cover(Image.open(photo2).convert("RGB"), focus2_y, focus2_x, zoom2, W // 2))
+    else:
+        base = cover(Image.open(photo).convert("RGB"), focus_y, focus_x, zoom)
+    breaking = style in ("breaking", "official")
+    label = label or ("오피셜" if style == "official" else "속보")
+    img = shade_breaking(base) if breaking else shade(base)
     layer = Image.new("RGBA", (W, H), (0, 0, 0, 0))
     draw = ImageDraw.Draw(layer)
+    if photo2:
+        draw_vs(draw)
+    if breaking:
+        size = draw_breaking(draw, label, headline, handle)
+        finish(img, layer, out)
+        if size == 84:
+            print("[warn] 제목이 길어 가장 작은 크기로 그렸습니다. 속보 제목은 한 줄 9자 안팎으로 줄이세요.")
+        print(out)
+        return
 
     draw.ellipse([MARGIN, 66, MARGIN + 12, 78], fill=ACCENT)
     draw.text((MARGIN + 26, 72), tag, font=font("Bold", 34), fill=TEXT, anchor="lm")
@@ -82,29 +146,41 @@ def render(photo: Path, tag: str, headline: str, out: Path, handle: str,
             x += head.getlength(text)
         y += line_h
 
-    shadow = Image.new("RGBA", (W, H), (0, 0, 0, 0))
-    shadow.putalpha(layer.getchannel("A").point(lambda a: a * 0.6).filter(ImageFilter.GaussianBlur(10)))
-    img = Image.alpha_composite(Image.alpha_composite(img, shadow), layer)
-
-    out.parent.mkdir(parents=True, exist_ok=True)
-    img.convert("RGB").save(out, "JPEG", quality=93)
+    finish(img, layer, out)
     if size == MIN_HEADLINE and max(head.getlength(plain(l)) for l in lines) > W - MARGIN * 2:
         print("[warn] 제목이 너무 길어 화면 밖으로 나갑니다. 한 줄을 줄이세요.")
     print(out)
 
 
+def finish(img: Image.Image, layer: Image.Image, out: Path) -> None:
+    shadow = Image.new("RGBA", (W, H), (0, 0, 0, 0))
+    shadow.putalpha(layer.getchannel("A").point(lambda a: a * 0.6).filter(ImageFilter.GaussianBlur(10)))
+    img = Image.alpha_composite(Image.alpha_composite(img, shadow), layer)
+    out.parent.mkdir(parents=True, exist_ok=True)
+    img.convert("RGB").save(out, "JPEG", quality=93)
+
+
 def main() -> None:
     p = argparse.ArgumentParser()
     p.add_argument("--photo", type=Path, required=True)
-    p.add_argument("--tag", required=True)
+    p.add_argument("--tag", default="")
     p.add_argument("--headline", required=True)
     p.add_argument("--out", type=Path, required=True)
     p.add_argument("--handle", default="@pitchnote_")
     p.add_argument("--focus-y", type=float, default=0.15)
     p.add_argument("--focus-x", type=float, default=0.5)
     p.add_argument("--zoom", type=float, default=1.0)
+    p.add_argument("--photo2", type=Path)
+    p.add_argument("--focus2-y", type=float, default=0.15)
+    p.add_argument("--focus2-x", type=float, default=0.5)
+    p.add_argument("--zoom2", type=float, default=1.0)
+    p.add_argument("--style", choices=["default", "breaking", "official"], default="default")
+    p.add_argument("--label")
     a = p.parse_args()
-    render(a.photo, a.tag, a.headline.replace("\\n", "\n"), a.out, a.handle, a.focus_y, a.focus_x, a.zoom)
+    if a.style == "default" and not a.tag:
+        p.error("기본 모양에는 --tag 가 필요합니다")
+    render(a.photo, a.tag, a.headline.replace("\\n", "\n"), a.out, a.handle, a.focus_y, a.focus_x, a.zoom,
+           a.photo2, a.focus2_y, a.focus2_x, a.zoom2, a.style, a.label)
 
 
 if __name__ == "__main__":

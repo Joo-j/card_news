@@ -21,6 +21,7 @@ FEEDS = [
     ("BBC Sport", "https://feeds.bbci.co.uk/sport/football/rss.xml"),
     ("The Guardian", "https://www.theguardian.com/football/rss"),
     ("Sky Sports", "https://www.skysports.com/rss/11095"),
+    ("Sky Sports PL", "https://www.skysports.com/rss/11661"),
     ("ESPN", "https://www.espn.com/espn/rss/soccer/news"),
 ]
 UA = {"User-Agent": "Mozilla/5.0 (compatible; card-news/1.0)"}

@@ -22,7 +22,7 @@ ALLOWED = re.compile(r"^(CC BY(-SA)? [0-9.]+|CC0|Public domain)$", re.I)
 
 def _meta(info: dict) -> dict:
     m = info["extmetadata"]
-    get = lambda k: re.sub(r"<[^>]+>", "", m.get(k, {}).get("value", "")).strip()
+    get = lambda k: re.sub(r"\s+", " ", re.sub(r"<[^>]+>", "", m.get(k, {}).get("value", ""))).strip()
     return {"artist": get("Artist"), "license": get("LicenseShortName"),
             "date": get("DateTimeOriginal")[:10], "page": info["descriptionurl"]}
 

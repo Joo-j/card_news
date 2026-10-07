@@ -50,6 +50,7 @@ card_news/
 |---|---|
 | `SKILL.md` | Claude가 따르는 작업 순서와 규칙 |
 | `scripts/fetch_news.py` | RSS에서 기사 후보 목록 출력. 피드 목록은 파일 위쪽 `FEEDS` |
+| `scripts/search_news.py` | 뉴스 검색에서 키워드별 최신 기사와 첫 보도 시각 출력. 속보·오피셜 후보 찾기용 |
 | `scripts/read_article.py` | 기사 본문 문단 추출 |
 | `scripts/find_photo.py` | 위키미디어 사진 검색과 내려받기, 작가·라이선스 기록 |
 | `scripts/render_card.py` | 이미지 생성. 계정 아이디 기본값은 `--handle` |
