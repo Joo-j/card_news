@@ -19,7 +19,7 @@ card_news는 주제별 인스타그램 계정에 올릴 카드뉴스 게시물�
 
 ## 폴더 구조
 
-저장소는 스킬, 문서, 게시물 세 갈래로 나뉩니다.
+저장소는 스킬, 문서, 게시물 목록, 게시물 네 갈래로 나뉩니다.
 
 ```
 card_news/
@@ -30,9 +30,13 @@ card_news/
 │   ├── 00-overview.md          이 문서
 │   ├── 01-<주제>.md            주제별 스펙
 │   └── build_html.py           읽기용 HTML 생성
+├── posted/
+│   └── <주제>.md               만들거나 올린 게시물 주제 목록 (git에 올림)
 └── posts/
     └── <주제>/YYYY-MM-DD/      만든 게시물 (git에 올리지 않음)
 ```
+
+`posts/`는 git에 올리지 않으므로 다른 컴퓨터에서는 보이지 않습니다. 어느 컴퓨터에서 작업하든 같은 소식을 다시 만들지 않도록, 게시물을 만들 때마다 주제를 `posted/<주제>.md`에 한 줄씩 적습니다.
 
 ## 주제 목록
 
@@ -66,7 +70,7 @@ card_news/
 새 주제는 기존 스킬 폴더를 복사해 주제에 맞게 바꾸는 것으로 시작합니다.
 
 1. `skills/football-card-news/`를 `skills/<주제>-card-news/`로 복사합니다.
-2. `SKILL.md`의 `name`, `description`, 기사 선택 기준, 카테고리 예시, 해시태그, 출력 경로(`posts/<주제>/`)를 바꿉니다.
+2. `SKILL.md`의 `name`, `description`, 기사 선택 기준, 카테고리 예시, 해시태그, 출력 경로(`posts/<주제>/`), 게시물 목록 경로(`posted/<주제>.md`)를 바꾸고, 빈 `posted/<주제>.md`를 만듭니다.
 3. `scripts/fetch_news.py`의 `FEEDS`를 그 주제의 RSS로 바꿉니다.
 4. `scripts/render_card.py`와 `scripts/render_slide.py`의 `--handle` 기본값을 그 주제의 계정 아이디로 바꿉니다. 필요하면 색과 배치도 바꿉니다.
 5. `docs/01-<주제>.md` 스펙을 쓰고 `docs/build_html.py`의 `DOCUMENTS`와 이 문서의 주제 목록에 추가합니다.

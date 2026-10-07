@@ -144,7 +144,7 @@ footer.colophon{color:var(--ink-3);font-size:12.5px;text-align:center;padding:8p
 <ul><li><strong>이미지</strong>: 업로드할 때 올리는 사진입니다. 한 장일 수도, 옆으로 넘겨 보는 여러 장일 수도 있습니다. 크기, 모양, 장 수는 주제 문서에서 정합니다.</li><li><strong>상세 내용</strong>: 기사의 사실을 정리한 글, 출처, 사진 출처, 해시태그를 담은 텍스트 파일입니다. 업로드할 때 본문에 통째로 붙여넣습니다.</li></ul>
 <p>두 파일은 확장자만 다르고 이름이 같습니다. 이미지가 여러 장이면 이미지 이름 뒤에 <code>_01</code>, <code>_02</code>처럼 장 순서를 붙입니다. 이름 앞의 번호는 그날의 추천 업로드 순서입니다.</p>
 <h3 id="doc-00-overview-3">폴더 구조</h3>
-<p>저장소는 스킬, 문서, 게시물 세 갈래로 나뉩니다.</p>
+<p>저장소는 스킬, 문서, 게시물 목록, 게시물 네 갈래로 나뉩니다.</p>
 <pre><code>card_news/
 ├── skills/
 │   ├── &lt;주제&gt;-card-news/       주제별 스킬 폴더
@@ -153,8 +153,11 @@ footer.colophon{color:var(--ink-3);font-size:12.5px;text-align:center;padding:8p
 │   ├── 00-overview.md          이 문서
 │   ├── 01-&lt;주제&gt;.md            주제별 스펙
 │   └── build_html.py           읽기용 HTML 생성
+├── posted/
+│   └── &lt;주제&gt;.md               만들거나 올린 게시물 주제 목록 (git에 올림)
 └── posts/
     └── &lt;주제&gt;/YYYY-MM-DD/      만든 게시물 (git에 올리지 않음)</code></pre>
+<p><code>posts/</code>는 git에 올리지 않으므로 다른 컴퓨터에서는 보이지 않습니다. 어느 컴퓨터에서 작업하든 같은 소식을 다시 만들지 않도록, 게시물을 만들 때마다 주제를 <code>posted/&lt;주제&gt;.md</code>에 한 줄씩 적습니다.</p>
 <h3 id="doc-00-overview-4">주제 목록</h3>
 <p>현재 운영하는 주제는 아래와 같습니다.</p>
 <div class="table-wrap"><table><thead><tr><th>주제</th><th>스킬</th><th>계정</th><th>스펙</th></tr></thead><tbody><tr><td>축구</td><td><code>football-card-news</code></td><td>@pitchnote_</td><td><code>01-football.md</code></td></tr></tbody></table></div>
@@ -165,7 +168,7 @@ footer.colophon{color:var(--ink-3);font-size:12.5px;text-align:center;padding:8p
 <p>스킬마다 스크립트와 글꼴을 따로 가집니다. <strong>한 주제의 스크립트를 고쳐도 다른 주제에는 반영되지 않으므로</strong>, 모든 주제에 필요한 수정이면 각 스킬에 같이 적용합니다.</p>
 <h3 id="doc-00-overview-6">새 주제 추가</h3>
 <p>새 주제는 기존 스킬 폴더를 복사해 주제에 맞게 바꾸는 것으로 시작합니다.</p>
-<ol><li><code>skills/football-card-news/</code>를 <code>skills/&lt;주제&gt;-card-news/</code>로 복사합니다.</li><li><code>SKILL.md</code>의 <code>name</code>, <code>description</code>, 기사 선택 기준, 카테고리 예시, 해시태그, 출력 경로(<code>posts/&lt;주제&gt;/</code>)를 바꿉니다.</li><li><code>scripts/fetch_news.py</code>의 <code>FEEDS</code>를 그 주제의 RSS로 바꿉니다.</li><li><code>scripts/render_card.py</code>와 <code>scripts/render_slide.py</code>의 <code>--handle</code> 기본값을 그 주제의 계정 아이디로 바꿉니다. 필요하면 색과 배치도 바꿉니다.</li><li><code>docs/01-&lt;주제&gt;.md</code> 스펙을 쓰고 <code>docs/build_html.py</code>의 <code>DOCUMENTS</code>와 이 문서의 주제 목록에 추가합니다.</li><li><code>.skill</code> 설치 파일을 만듭니다.</li></ol>
+<ol><li><code>skills/football-card-news/</code>를 <code>skills/&lt;주제&gt;-card-news/</code>로 복사합니다.</li><li><code>SKILL.md</code>의 <code>name</code>, <code>description</code>, 기사 선택 기준, 카테고리 예시, 해시태그, 출력 경로(<code>posts/&lt;주제&gt;/</code>), 게시물 목록 경로(<code>posted/&lt;주제&gt;.md</code>)를 바꾸고, 빈 <code>posted/&lt;주제&gt;.md</code>를 만듭니다.</li><li><code>scripts/fetch_news.py</code>의 <code>FEEDS</code>를 그 주제의 RSS로 바꿉니다.</li><li><code>scripts/render_card.py</code>와 <code>scripts/render_slide.py</code>의 <code>--handle</code> 기본값을 그 주제의 계정 아이디로 바꿉니다. 필요하면 색과 배치도 바꿉니다.</li><li><code>docs/01-&lt;주제&gt;.md</code> 스펙을 쓰고 <code>docs/build_html.py</code>의 <code>DOCUMENTS</code>와 이 문서의 주제 목록에 추가합니다.</li><li><code>.skill</code> 설치 파일을 만듭니다.</li></ol>
 <p>Claude에게 "&lt;주제&gt; 카드뉴스 스킬 새로 만들어줘"라고 요청하면 위 순서대로 처리합니다.</p>
 <p><code>description</code>에는 그 주제의 요청에만 스킬이 쓰이도록 범위를 분명히 적습니다. 범위가 겹치면 다른 주제의 요청에 엉뚱한 스킬이 쓰입니다.</p>
 <h3 id="doc-00-overview-7">스킬 설치</h3>
@@ -190,7 +193,7 @@ footer.colophon{color:var(--ink-3);font-size:12.5px;text-align:center;padding:8p
 <p>라이브 중계 페이지, 영상·오디오 페이지, 퀴즈, 칼럼, 하위 리그 단신, 근거가 약한 이적 루머 모음은 제외합니다. 같은 사건을 여러 매체가 다루면 하나로 묶고 출처를 함께 적습니다.</p>
 <p>며칠째 이어지는 큰 사건은 24시간 목록에 판결이나 발표 기사가 없어도 후보에 넣습니다. 96시간 목록에서 여러 매체 제목에 반복해 나오는 사건을 찾고, 가장 최근 진행 상황을 다룬 기사를 출처로 씁니다.</p>
 <p><strong>기사 주인공의 얼굴 사진을 찾을 수 없는 기사는 후보에 올리지 않습니다.</strong> 다른 인물 사진으로 대신하지 않으며, 후보에는 쓸 수 있는 사진의 인물·연도·소속팀을 함께 적습니다.</p>
-<p>이미 만든 게시물과 같은 사건은 다시 고르지 않습니다. 그날과 전날의 <code>posts/football/</code> 폴더가 판단 기준입니다.</p>
+<p>이미 만든 게시물과 같은 사건은 다시 고르지 않습니다. 판단 기준은 저장소의 <code>posted/football.md</code>입니다. <code>posts/</code> 폴더는 git에 올라가지 않아 다른 컴퓨터에서는 보이지 않기 때문에, 만들거나 올린 게시물의 주제를 이 목록에 한 줄씩 적어 둡니다. 계정에는 저장소 밖에서 만든 게시물도 올라가므로, 후보를 보여 줄 때 이미 올라간 주제가 있는지 사용자에게도 묻습니다.</p>
 <h3 id="doc-01-football-4">이미지 규격</h3>
 <p>이미지는 인스타그램 세로 비율(4:5)에 맞춘 1080×1350 JPEG입니다.</p>
 <div class="table-wrap"><table><thead><tr><th>요소</th><th>위치</th><th>글꼴</th><th>색</th></tr></thead><tbody><tr><td>배경 사진</td><td>화면 전체, 비율을 유지해 잘라 맞춤</td><td>없음</td><td>아래쪽 64%부터 검은 그라데이션</td></tr><tr><td>카테고리</td><td>왼쪽 위</td><td>Pretendard Bold 34px, 앞에 점</td><td>흰색, 점은 파란색</td></tr><tr><td>계정 아이디</td><td>제목 바로 위</td><td>Pretendard Bold 32px</td><td>연회색</td></tr><tr><td>제목</td><td>왼쪽 아래, 두 줄</td><td>Pretendard Black 72~104px</td><td>흰색, 강조 단어는 파란색</td></tr></tbody></table></div>
