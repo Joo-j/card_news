@@ -35,6 +35,82 @@ def font(weight: str, size: int) -> ImageFont.FreeTypeFont:
     return ImageFont.truetype(str(FONTS / f"Pretendard-{weight}.otf"), size)
 
 
+# Pretendard 의 따옴표는 기울어진 막대 모양이라, 따옴표 글자는 둥근 66·99 모양으로 직접 그린다.
+# " ' 는 한 줄 안에서 여는 따옴표와 닫는 따옴표를 번갈아 쓰고, “ ” ‘ ’ 는 그대로 따른다.
+QUOTE_CHARS = {"“": (True, 2), "”": (False, 2), "‘": (True, 1), "’": (False, 1)}
+
+
+def curly(text: str) -> str:
+    """곧은 따옴표 " ' 를 한 줄 안에서 번갈아 여는·닫는 따옴표로 바꾼다."""
+    out, opening = "", {'"': True, "'": True}
+    for ch in text:
+        if ch in opening:
+            out += {('"', True): "“", ('"', False): "”", ("'", True): "‘", ("'", False): "’"}[ch, opening[ch]]
+            opening[ch] = not opening[ch]
+        else:
+            out += ch
+    return out
+
+
+def quote_parts(text: str) -> list[tuple[str, tuple[bool, int] | None]]:
+    parts, buf = [], ""
+    for ch in curly(text):
+        mark = QUOTE_CHARS.get(ch)
+        if mark:
+            if buf:
+                parts.append((buf, None))
+            parts.append(("", mark))
+            buf = ""
+        else:
+            buf += ch
+    if buf:
+        parts.append((buf, None))
+    return parts
+
+
+def mark_size(f: ImageFont.FreeTypeFont, count: int) -> tuple[float, float, float]:
+    r = f.size * 0.085
+    gap = r * 0.7
+    return r, gap, f.size * 0.05 * 2 + count * r * 2 + (count - 1) * gap
+
+
+def text_length(text: str, f: ImageFont.FreeTypeFont) -> float:
+    return sum(f.getlength(t) if mark is None else mark_size(f, mark[1])[2] for t, mark in quote_parts(text))
+
+
+def draw_mark(draw: ImageDraw.ImageDraw, x: float, baseline: float, f: ImageFont.FreeTypeFont,
+              opening: bool, count: int, fill) -> None:
+    r, gap, _ = mark_size(f, count)
+    top = baseline - f.size * 0.8
+    for i in range(count):
+        cx = x + f.size * 0.05 + r + i * (2 * r + gap)
+        # 닫는 따옴표(99): 위에 둥근 머리, 아래로 왼쪽으로 휘는 꼬리. 여는 따옴표(66)는 이를 180도 돌린 모양.
+        cy = top + r if not opening else top + r * 2.4
+        tail = [(r, 0), (r * 0.95, r * 1.2), (r * 0.2, r * 2.1), (-r * 0.75, r * 2.5),
+                (-r * 0.15, r * 1.6), (0, r * 0.95), (-r * 0.6, 0)]
+        sign = -1 if opening else 1
+        draw.polygon([(cx + sign * px, cy + sign * py) for px, py in tail], fill=fill)
+        draw.ellipse([cx - r, cy - r, cx + r, cy + r], fill=fill)
+
+
+def draw_text(draw: ImageDraw.ImageDraw, xy: tuple[float, float], text: str, f: ImageFont.FreeTypeFont,
+              fill, anchor: str = "la") -> float:
+    """draw.text 와 같되 따옴표를 직접 그린다. 그린 너비를 돌려준다."""
+    x, y = xy
+    width = text_length(text, f)
+    x -= {"l": 0, "m": width / 2, "r": width}[anchor[0]]
+    ascent, descent = f.getmetrics()
+    baseline = {"a": y + ascent, "s": y, "m": y + (ascent - descent) / 2, "d": y - descent}[anchor[1]]
+    for t, mark in quote_parts(text):
+        if mark is None:
+            draw.text((x, baseline), t, font=f, fill=fill, anchor="ls")
+            x += f.getlength(t)
+        else:
+            draw_mark(draw, x, baseline, f, mark[0], mark[1], fill)
+            x += mark_size(f, mark[1])[2]
+    return width
+
+
 def cover(photo: Image.Image, focus_y: float, focus_x: float, zoom: float, width: int = W) -> Image.Image:
     scale = max(width / photo.width, H / photo.height) * zoom
     resized = photo.resize((round(photo.width * scale), round(photo.height * scale)), Image.LANCZOS)
@@ -80,14 +156,14 @@ def shade_breaking(img: Image.Image) -> Image.Image:
 def draw_breaking(draw: ImageDraw.ImageDraw, label: str, headline: str, handle: str) -> int:
     lines = [plain(l) for l in headline.split("\n")]
     size = 132
-    while size > 84 and max(font("Black", size).getlength(l) for l in lines) > W - 72 * 2:
+    while size > 84 and max(text_length(l, font("Black", size)) for l in lines) > W - 72 * 2:
         size -= 2
     head = font("Black", size)
     line_h = int(size * 1.18)
     y = H - 200 - line_h * len(lines)
     draw.text((72, y - int(size * 0.95)), f"[{label}]", font=font("Black", int(size * 0.72)), fill=TEXT)
     for line in lines:
-        draw.text((72, y), line, font=head, fill=BREAKING)
+        draw_text(draw, (72, y), line, head, BREAKING)
         y += line_h
     if handle:
         draw.text((W // 2, H - 80), handle, font=font("Bold", 34), fill=TEXT, anchor="ms")
@@ -127,11 +203,11 @@ def render(photo: Path, tag: str, headline: str, out: Path, handle: str,
         return
 
     draw.ellipse([MARGIN, 66, MARGIN + 12, 78], fill=ACCENT)
-    draw.text((MARGIN + 26, 72), tag, font=font("Bold", 34), fill=TEXT, anchor="lm")
+    draw_text(draw, (MARGIN + 26, 72), tag, font("Bold", 34), TEXT, anchor="lm")
 
     lines = headline.split("\n")
     size = MAX_HEADLINE
-    while size > MIN_HEADLINE and max(font("Black", size).getlength(plain(l)) for l in lines) > W - MARGIN * 2:
+    while size > MIN_HEADLINE and max(text_length(plain(l), font("Black", size)) for l in lines) > W - MARGIN * 2:
         size -= 2
     head = font("Black", size)
     line_h = int(size * 1.22)
@@ -141,13 +217,12 @@ def render(photo: Path, tag: str, headline: str, out: Path, handle: str,
         draw.text((MARGIN, y - 24), handle, font=font("Bold", 32), fill=HANDLE, anchor="ls")
     for line in lines:
         x = MARGIN
-        for text, accent in segments(line):
-            draw.text((x, y), text, font=head, fill=ACCENT if accent else TEXT)
-            x += head.getlength(text)
+        for text, accent in segments(curly(line)):
+            x += draw_text(draw, (x, y), text, head, ACCENT if accent else TEXT)
         y += line_h
 
     finish(img, layer, out)
-    if size == MIN_HEADLINE and max(head.getlength(plain(l)) for l in lines) > W - MARGIN * 2:
+    if size == MIN_HEADLINE and max(text_length(plain(l), head) for l in lines) > W - MARGIN * 2:
         print("[warn] 제목이 너무 길어 화면 밖으로 나갑니다. 한 줄을 줄이세요.")
     print(out)
 
